@@ -1,30 +1,38 @@
 import scrapy
 import re
-from ..items import HikeItem
+from ..items import HikeItem, remove_whitespace, str_to_int, str_to_float
+from scrapy.loader import ItemLoader
+from itemloaders.processors import TakeFirst, Identity
 
+# A class for crawling the wta website to collect hike data and hike reports.
 class wta_spider(scrapy.Spider):
-    name='wta_spider'
-    start_urls=['https://www.wta.org/go-outside/hikes'] #start_urls is a shortcut for start_requests()
+    name = 'wta_spider'
+    start_urls = ['https://www.wta.org/go-outside/hikes']  # start_urls is a shortcut for start_requests()
 
-    def parse(self,response):
+    # Parses the hike data from search result items into HikeItems using scrapy.ItemLoader.
+    def parse(self, response):
         i = 0
-        for hike_item in response.css('div.search-result-item'): #the parent of all hike item fields
-            hike_header = hike_item.css(' div.item-header') #the parent of name, region 1 and region 2 fields
-            hike_stats = hike_item.css(' div.hike-stats.alpha > div') #the parent of all the rest of the fields
+        for hike_search_result_item in response.css('div.search-result-item'):  # the parent of all hike item fields
 
-            hike = HikeItem()
-            hike['name'] = hike_header.xpath('.//a/span/text()').get()
-            hike['region_1'] = hike_header.xpath('.//h3/text()').get()
-            hike['region_2'] = hike_header.xpath('.//h3/text()').get()
-            hike['length'] = hike_stats.css('div.hike-length > span::text').get()
-            hike['roundtrip'] = hike_stats.css('div.hike-length > span::text').get()
-            hike['gain'] = hike_stats.css('div.hike-gain > span::text').get()
-            hike['highpoint'] = hike_stats.css('div.hike-highpoint > span::text').get()
-            hike['rating'] = hike_stats.css('div.current-rating::text').get()
-            hike['votes'] = hike_stats.css('span.rating-count::text').get()
-            hike['features'] = hike_stats.css('div.trip-features img::attr(title)').getall()
-            hike['desc'] = hike_item.css('div.listing-summary.omega.show-excerpt::text').get()
-            yield hike
-        next_page = response.css('li.next > a').xpath('./@href').get() #getting next page link
+            hike = HikeItem()  # my custom hike item
+            l = ItemLoader(hike, selector=hike_search_result_item)  # item loader
+
+            # Most field data I feed through the hike item's input and output processors, but name is simple enough
+            # to get directly without processing.
+            hike['name'] = l.get_xpath('.//a/span/text()', TakeFirst())  # name
+            l.add_xpath('region_1', './/h3/text()')  # region_1
+            l.add_xpath('region_2', './/h3/text()')  # region_2
+            l.add_css('gain', 'div.hike-gain > span::text')  # gain
+            l.add_css('highpoint', 'div.hike-highpoint > span::text')  # highpoint
+            l.add_css('length', 'div.hike-length > span::text')  # length
+            l.add_css('roundtrip', 'div.hike-length > span::text')  # roundtrip
+            l.add_css('rating', 'div.current-rating::text')
+            l.add_css('votes', 'span.rating-count::text')
+            l.add_css('features', 'div.trip-features img::attr(title)')
+            l.add_css('desc', 'div.listing-summary.omega.show-excerpt::text')
+            yield l.load_item()
+
+        # The spider will crawl through all pages of search results.
+        next_page = response.css('li.next > a').xpath('./@href').get()  # getting next page link
         if next_page:
-            yield scrapy.Request(next_page, callback=self.parse) #recursively parsing each page
+            yield scrapy.Request(next_page, callback=self.parse)  # recursively parsing each page
