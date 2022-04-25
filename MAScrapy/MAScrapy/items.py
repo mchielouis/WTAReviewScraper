@@ -51,12 +51,14 @@ def regex_sub_2019(value):
 
 # hike custom item, with fields having default values and input,output processor where applicable
 class HikeItem(scrapy.Item):
-    id = scrapy.Field()
-    name = scrapy.Field(default='')
-    # A note on input and output processors: they always work on iterables. That is why everything goes through
-    # mapCompose, because almost all the data I'm pulling, except for the hike features, are not originally
-    # iterables. MapCompose applies the functions to each value in an iterable in succession. Most of the time
-    # that iterable, in this case, is a single item list.
+    # A note on input and output processors: according to scrapy design they always work on iterables.
+    # That is why everything goes through mapCompose, because almost all the data I'm pulling, except for
+    # the hike features, are not originally iterables, but single value strings. MapCompose applies the functions
+    # to each value in an iterable in succession. Most of the time that iterable, in this case, is a single item list.
+    name = scrapy.Field(
+        default='',
+        output_processor=TakeFirst())
+
     region_1 = scrapy.Field(
         default='',
         input_processor=MapCompose(split_hyphen, remove_whitespace),
@@ -102,7 +104,11 @@ class HikeItem(scrapy.Item):
     )
     desc = scrapy.Field(
         default='',
-        input_processor=MapCompose(regex_sub_2019,remove_whitespace),
+        input_processor=MapCompose(regex_sub_2019, remove_whitespace),
         output_processor=TakeFirst()
+    )
+    coords = scrapy.Field(
+        output=None,
+        input_processor=MapCompose(str_to_float)
     )
 

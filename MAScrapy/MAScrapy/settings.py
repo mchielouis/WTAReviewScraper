@@ -6,13 +6,16 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+from .mongo_db import mongo_uri, mongo_db_name
 
 BOT_NAME = 'MAScrapy'
 
 SPIDER_MODULES = ['MAScrapy.spiders']
 NEWSPIDER_MODULE = 'MAScrapy.spiders'
 
-
+#Mongo db credentials
+MONGO_URI=mongo_uri
+MONGO_DATABASE=mongo_db_name
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36'
 
@@ -64,9 +67,9 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'MAScrapy.pipelines.MascrapyPipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'MAScrapy.pipelines.MascrapyPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
@@ -83,8 +86,8 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Enable and configure HTTP caching (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings
-#HTTPCACHE_ENABLED = True
+HTTPCACHE_ENABLED = True
 #HTTPCACHE_EXPIRATION_SECS = 0
-#HTTPCACHE_DIR = 'httpcache'
+HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
-#HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
